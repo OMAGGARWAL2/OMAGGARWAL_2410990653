@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Interface</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Student Dashboard</h2>
+        <div class="dashboard-options">
+            <button onclick="showViewResult()">View Result</button>
+            <button onclick="showApplyReappear()">Apply for Reappear</button>
+            <button onclick="showApplyReval()">Apply for Re-Evaluation</button>
+            <button onclick="showViewRevalStatus()">View Re-Evaluated Result</button>
+        </div>
+
+        <div id="viewResultSection" class="content-section">
+            <h3>Check Your Result</h3>
+            <input id="roll" placeholder="Roll Number" type="text" />
+            <input id="subcode" placeholder="Subject Code" type="text" />
+            <input id="qpcode" placeholder="Question Paper Code" type="text" />
+            <button onclick="viewResult()">View Result</button>
+
+            <div id="resultDisplay"></div>
+        </div>
+
+        <div id="applyReappearSection" class="content-section" style="display:none;">
+            <h3>Apply for Reappear</h3>
+            <p>Please enter the details for your reappear request.</p>
+            <input id="reappearRoll" placeholder="Roll Number" type="text" />
+            <input id="reappearSubcode" placeholder="Subject Code" type="text" />
+            <button onclick="submitReappear()">Submit Reappear Request</button>
+            <div id="reappearMessage"></div>
+            <div id="reappearTempIdDisplay"></div>
+        </div>
+
+        <div id="applyRevalSection" class="content-section" style="display:none;">
+            <h3>Apply for Re-Evaluation</h3>
+            <input id="revalRoll" placeholder="Roll Number" type="text" />
+            <input id="revalSubcode" placeholder="Subject Code" type="text" />
+            <input id="revalQpcode" placeholder="Question Paper Code" type="text" />
+            <textarea id="revalQueryText" placeholder="Enter question number and your query (e.g., Q3: Calculation error)"></textarea>
+            <button onclick="applyReval()">Submit Re-Evaluation Request</button>
+            <div id="revalTempIdDisplay"></div>
+        </div>
+
+        <div id="viewRevalStatusSection" class="content-section" style="display:none;">
+            <h3>View Re-Evaluated Result Status</h3>
+            <input id="revalStatusTempId" placeholder="Enter Temporary ID" type="text" />
+            <button onclick="checkRevalStatus()">Check Status</button>
+            <div id="revalStatusDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global references for easier access, as multiple sections use them
+        const rollInput = document.getElementById("roll");
+        const subcodeInput = document.getElementById("subcode");
+        const qpcodeInput = document.getElementById("qpcode");
+        const resultDisplay = document.getElementById("resultDisplay");
+
+        const reappearRollInput = document.getElementById("reappearRoll");
+        const reappearSubcodeInput = document.getElementById("reappearSubcode");
+        const reappearMessageDiv = document.getElementById("reappearMessage");
+        const reappearTempIdDisplay = document.getElementById("reappearTempIdDisplay");
+
+        const revalRollInput = document.getElementById("revalRoll");
+        const revalSubcodeInput = document.getElementById("revalSubcode");
+        const revalQpcodeInput = document.getElementById("revalQpcode");
+        const revalQueryTextInput = document.getElementById("revalQueryText");
+        const revalTempIdDisplay = document.getElementById("revalTempIdDisplay");
+
+        const revalStatusTempIdInput = document.getElementById("revalStatusTempId");
+        const revalStatusDisplay = document.getElementById("revalStatusDisplay");
+
+
+        const sections = ['viewResultSection', 'applyReappearSection', 'applyRevalSection', 'viewRevalStatusSection'];
+
+        function hideAllSections() {
+            sections.forEach(id => document.getElementById(id).style.display = 'none');
+        }
+
+        function showViewResult() {
+            hideAllSections();
+            document.getElementById('viewResultSection').style.display = 'block';
+            // Clear previous result display
+            resultDisplay.innerHTML = '';
+        }
+
+        function showApplyReappear() {
+            hideAllSections();
+            document.getElementById('applyReappearSection').style.display = 'block';
+            reappearMessageDiv.innerHTML = '';
+            reappearTempIdDisplay.innerHTML = ''; // Clear ID display on show
+            // Pre-fill if values are already in the main result check fields
+            reappearRollInput.value = rollInput.value;
+            reappearSubcodeInput.value = subcodeInput.value;
+        }
+
+        function showApplyReval() {
+            hideAllSections();
+            document.getElementById('applyRevalSection').style.display = 'block';
+            revalTempIdDisplay.innerHTML = '';
+            // Pre-fill if values are already in the main result check fields
+            revalRollInput.value = rollInput.value;
+            revalSubcodeInput.value = subcodeInput.value;
+            revalQpcodeInput.value = qpcodeInput.value;
+        }
+
+        function showViewRevalStatus() {
+            hideAllSections();
+            document.getElementById('viewRevalStatusSection').style.display = 'block';
+            revalStatusDisplay.innerHTML = '';
+        }
+
+        // Initial display on page load
+        showViewResult();
+
+        function validateInput(roll, subcode) {
+            if (!roll.trim() || !subcode.trim()) {
+                return "Roll Number and Subject Code cannot be empty.";
+            }
+            if (roll.trim().length < 8) {
+                return "Roll number cannot be less than 8 characters.";
+            }
+            if (subcode.trim().length > 3) {
+                return "Subject code cannot be more than 3 characters.";
+            }
+            return ""; // No error
+        }
+
+        function getResultCardColorClass(totalMarks) {
+            if (totalMarks > 75) {
+                return 'result-card-green';
+            } else if (totalMarks > 50) {
+                return 'result-card-yellow';
+            } else {
+                return 'result-card-red';
+            }
+        }
+
+        function viewResult() {
+            let rollVal = rollInput.value.trim();
+            let subcodeVal = subcodeInput.value.trim();
+            let qpcodeVal = qpcodeInput.value.trim();
+
+            if (!rollVal || !subcodeVal || !qpcodeVal) {
+                resultDisplay.innerHTML = "<p class='error-message'>Please enter Roll Number, Subject Code, and Question Paper Code.</p>";
+                return;
+            }
+            if (rollVal.length < 8) {
+                resultDisplay.innerHTML = "<p class='error-message'>Roll number cannot be less than 8 characters.</p>";
+                return;
+            }
+            if (subcodeVal.length > 3) {
+                resultDisplay.innerHTML = "<p class='error-message'>Subject code cannot be more than 3 characters.</p>";
+                return;
+            }
+
+            let key = `${rollVal}_${subcodeVal}_${qpcodeVal}`;
+            let data = JSON.parse(localStorage.getItem(key));
+
+            if (!data) {
+                resultDisplay.innerHTML = "<p class='error-message'>No result found for the given details. Please check your inputs.</p>";
+                return;
+            }
+
+            // Determine the color class based on total marks
+            const colorClass = getResultCardColorClass(data.total);
+
+            // Construct the HTML for the result card to be downloaded
+            // We use a separate div here to ensure only this specific content is converted to PDF
+            const pdfContentHtml = `
+                <div class="pdf-container">
+                    <h1 style="text-align: center; color: #34495e;">Student Examination Result</h1>
+                    <hr style="border: 0; height: 1px; background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); margin: 20px 0;">
+                    <div class="result-card ${colorClass}" style="box-shadow: none; border: 1px solid #ddd;">
+                        <h3 style="text-align: center; margin-top: 0; color: #007bff; border-bottom: 1px dashed #bbb; padding-bottom: 10px;">Official Result Statement</h3>
+                        <p><b>Name:</b> ${data.name}</p>
+                        <p><b>Roll No:</b> ${data.roll}</p>
+                        <p><b>Subject Code:</b> ${data.subcode}</p>
+                        <p><b>QP Code:</b> ${data.qpcode}</p>
+                        <p><b>External Marks:</b> ${data.ext} / 80</p>
+                        <p><b>Internal Marks:</b> ${data.int} / 20</p>
+                        <p><b>Total Marks:</b> ${data.total} / 100</p>
+                        <p><b>Grade:</b> <span class="grade-display grade-${data.grade.toLowerCase()}" style="padding: 5px 10px; border-radius: 5px; font-weight: bold; background-color: ${getGradeColor(data.grade)}; color: white;">${data.grade}</span></p>
+                    </div>
+                    <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 30px;">
+                        This is an electronically generated statement. No signature is required.
+                        <br>For verification, please visit our official portal.
+                    </p>
+                </div>
+            `;
+
+            // Display the result in the browser
+            resultDisplay.innerHTML = pdfContentHtml + `
+                <button onclick="downloadResultPdf()" class="secondary">Download Result as PDF</button>
+            `;
+
+            if (data.total < 65) {
+                resultDisplay.innerHTML += `<button onclick="populateAndShowReappear('${data.roll}', '${data.subcode}')" class="secondary">Apply for Reappear</button>`;
+            }
+        }
+
+        // Helper to get grade color for inline style in PDF HTML
+        function getGradeColor(grade) {
+            switch (grade.toUpperCase()) {
+                case 'A': return '#28a745';
+                case 'B': return '#20c997';
+                case 'C': return '#007bff';
+                case 'D': return '#ffc107';
+                case 'E': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+
+        function downloadResultPdf() {
+            // Create a temporary div to hold the content for PDF generation
+            const tempDiv = document.createElement('div');
+            // Populate it with the formal PDF content, ensuring styles are embedded or available
+            // Note: We are reusing the structure generated in viewResult for PDF,
+            // but for absolute formality and control, you might create a dedicated hidden element
+            // or re-render a "printable" version here.
+            // For now, we'll extract the 'pdf-container' content from resultDisplay if available.
+            const pdfContentElement = document.querySelector('#resultDisplay .pdf-container');
+            if (pdfContentElement) {
+                 tempDiv.innerHTML = pdfContentElement.outerHTML; // Get the outer HTML of the formal result container
+            } else {
+                alert("Result content not found for PDF generation.");
+                return;
+            }
+
+            // Options for html2pdf - adjusted for formality and reliability
+            const opt = {
+                margin: 15, // Increased margin for formal look
+                filename: `Result_${rollInput.value.trim()}_${subcodeInput.value.trim()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 3, // Increased scale for higher resolution, crisper text
+                    logging: false, // Turn off logging in console
+                    useCORS: true, // Important for images, if any, to load correctly
+                    scrollY: 0, // Start capture from the top
+                    windowWidth: tempDiv.scrollWidth, // Capture full width of content
+                    windowHeight: tempDiv.scrollHeight, // Capture full height of content
+                    allowTaint: true // Allow cross-origin images to "taint" the canvas (for local testing)
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Use html2pdf on the temporary div.
+            // html2pdf will clone this element and apply styles.
+            html2pdf().set(opt).from(tempDiv).save();
+        }
+
+
+        function populateAndShowReappear(roll, subcode) {
+            reappearRollInput.value = roll;
+            reappearSubcodeInput.value = subcode;
+            showApplyReappear();
+            reappearMessageDiv.innerHTML = "<p class='info-message'>Details pre-filled for reappear. Please confirm and submit.</p>";
+        }
+
+        function submitReappear() {
+            let rollVal = reappearRollInput.value.trim();
+            let subcodeVal = reappearSubcodeInput.value.trim();
+
+            const validationError = validateInput(rollVal, subcodeVal);
+            if (validationError) {
+                reappearMessageDiv.innerHTML = `<p class='error-message'>${validationError}</p>`;
+                reappearTempIdDisplay.innerHTML = ''; // Clear ID if validation fails
+                return;
+            }
+
+            // Generate a simple temporary ID for reappear
+            const tempId = 'REAPP-' + Date.now().toString().slice(-6) + Math.random().toString(36).substring(2, 5).toUpperCase();
+
+            let reappearRequests = JSON.parse(localStorage.getItem("reappears") || "[]");
+            reappearRequests.push({
+                roll: rollVal,
+                subcode: subcodeVal,
+                date: new Date().toLocaleString(),
+                tempId: tempId, // Store the generated ID
+                status: "Pending"
+            });
+            localStorage.setItem("reappears", JSON.stringify(reappearRequests));
+
+            reappearMessageDiv.innerHTML = "<p class='success-message'>Reappear request submitted successfully! An administrator will review it.</p>";
+            reappearTempIdDisplay.innerHTML = `
+                <div class="info-message">
+                    Your Reappear Request ID: <b>${tempId}</b>. Please note it down.
+                    <p>You can use this ID to track your reappear status (though tracking itself isn't implemented here).</p>
+                </div>
+            `;
+            // Clear fields after submission
+            reappearRollInput.value = '';
+            reappearSubcodeInput.value = '';
+        }
+
+
+        function applyReval() {
+            let rollVal = revalRollInput.value.trim();
+            let subcodeVal = revalSubcodeInput.value.trim();
+            let qpcodeVal = revalQpcodeInput.value.trim();
+            let queryVal = revalQueryTextInput.value.trim();
+
+            if (!rollVal || !subcodeVal || !qpcodeVal || !queryVal) {
+                revalTempIdDisplay.innerHTML = "<p class='error-message'>Please fill all fields for re-evaluation request.</p>";
+                return;
+            }
+            if (rollVal.length < 8) {
+                revalTempIdDisplay.innerHTML = "<p class='error-message'>Roll number cannot be less than 8 characters.</p>";
+                return;
+            }
+            if (subcodeVal.length > 3) {
+                revalTempIdDisplay.innerHTML = "<p class='error-message'>Subject code cannot be more than 3 characters.</p>";
+                return;
+            }
+
+            // Generate a simple temporary ID for client-side demo
+            // In a real app, this would come from the backend after saving to DB
+            const tempId = 'REVAL-' + Date.now().toString().slice(-6) + Math.random().toString(36).substring(2, 5).toUpperCase();
+
+            let arr = JSON.parse(localStorage.getItem("revals") || "[]");
+            arr.push({
+                roll: rollVal,
+                subcode: subcodeVal,
+                qpcode: qpcodeVal,
+                query: queryVal,
+                tempId: tempId,
+                status: "Pending" // Initial status
+            });
+            localStorage.setItem("revals", JSON.stringify(arr));
+
+            revalTempIdDisplay.innerHTML = `
+                <div class="info-message">
+                    Re-evaluation request submitted. Your Temporary ID: <b>${tempId}</b>. Please note it down.
+                    <p>You can use this ID in "View Re-Evaluated Result Status" to check progress.</p>
+                </div>
+            `;
+            // Clear fields after submission
+            revalRollInput.value = '';
+            revalSubcodeInput.value = '';
+            revalQpcodeInput.value = '';
+            revalQueryTextInput.value = '';
+        }
+
+        function checkRevalStatus() {
+            let tempIdToCheck = revalStatusTempIdInput.value.trim();
+            if (!tempIdToCheck) {
+                revalStatusDisplay.innerHTML = "<p class='error-message'>Please enter a Temporary ID to check status.</p>";
+                return;
+            }
+
+            let revals = JSON.parse(localStorage.getItem("revals") || "[]");
+            let found = revals.find(r => r.tempId === tempIdToCheck);
+
+            if (found) {
+                let key = `${found.roll}_${found.subcode}_${found.qpcode}`;
+                let updatedData = JSON.parse(localStorage.getItem(key));
+
+                // Determine the color class for the status result card
+                const statusColorClass = updatedData ? getResultCardColorClass(updatedData.total) : '';
+
+                revalStatusDisplay.innerHTML = `
+                    <div class="result-card ${statusColorClass}">
+                        <h3>Status for Re-evaluation ID: ${found.tempId}</h3>
+                        <p><b>Roll No:</b> ${found.roll}</p>
+                        <p><b>Subject Code:</b> ${found.subcode}</p>
+                        <p><b>QP Code:</b> ${found.qpcode}</p>
+                        <p><b>Original Query:</b> ${found.query}</p>
+                        <p><b>Status:</b> <span class="status-display status-${found.status.split(' ')[0].toLowerCase()}">${found.status}</span></p>
+                        ${updatedData ? `
+                            <h4>Current Marks:</h4>
+                            <p><b>Name:</b> ${updatedData.name}</p>
+                            <p><b>External:</b> ${updatedData.ext} / 80</p>
+                            <p><b>Internal:</b> ${updatedData.int} / 20</p>
+                            <p><b>Total:</b> ${updatedData.total} / 100</p>
+                            <p><b>Grade:</b> <span class="grade-display grade-${updatedData.grade.toLowerCase()}">${updatedData.grade}</span></p>
+                            <p class="info-message">Marks shown reflect the current stored result. If your re-evaluation status is 'Completed', these are your final marks.</p>
+                        ` : `<p class='warning-message'>No updated result found yet for this combination.</p>`}
+                    </div>
+                `;
+            } else {
+                revalStatusDisplay.innerHTML = "<p class='error-message'>No re-evaluation request found with that Temporary ID. Please double-check.</p>";
+            }
+        }
+    </script>
+</body>
+</html>

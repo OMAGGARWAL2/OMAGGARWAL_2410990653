@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" id="loginContainer">
+        <h2>Admin Login</h2>
+        <input type="text" id="adminUsername" placeholder="Username" />
+        <input type="password" id="adminPassword" placeholder="Password" />
+        <button onclick="adminLogin()">Login</button>
+        <p id="loginMessage" style="color: red;"></p>
+    </div>
+
+    <div class="container" id="adminPanel" style="display:none;">
+        <h2>Admin Interface</h2>
+
+        <!-- MARK FEEDING SECTION -->
+        <h3>📊 Feed Student Marks</h3>
+        <input type="text" id="sname" placeholder="Student Name" />
+        <input type="text" id="roll" placeholder="Roll Number" />
+        <input type="text" id="subcode" placeholder="Subject Code" />
+        <input type="text" id="qpcode" placeholder="Question Paper Code" />
+        <input type="number" id="ext" placeholder="External Marks (out of 80)" />
+        <input type="number" id="int" placeholder="Internal Marks (out of 20)" />
+        <button onclick="saveMarks()">Submit Result</button>
+
+        <hr>
+
+        <h3>📝 Re-Evaluation Requests</h3>
+        <div id="revalContainer"></div>
+
+        <h3>📚 Reappear Requests</h3>
+        <div id="reappearContainer"></div>
+
+        <h3>❓ Old Queries (if any, now usually part of re-eval)</h3>
+        <div id="queryContainer"></div>
+    </div>
+
+    <script>
+        const CORRECT_USERNAME = "OM AGGARWAL";
+        const CORRECT_PASSWORD = "PHOENIX.ASH21"; // !! IMPORTANT: CHANGE THIS FOR PRODUCTION !!
+
+        function adminLogin() {
+            const username = document.getElementById("adminUsername").value;
+            const password = document.getElementById("adminPassword").value;
+            const loginMessage = document.getElementById("loginMessage");
+
+            if (username === CORRECT_USERNAME && password === CORRECT_PASSWORD) {
+                document.getElementById("loginContainer").style.display = "none";
+                document.getElementById("adminPanel").style.display = "block";
+                loadRequests(); // Load requests after successful login
+            } else {
+                loginMessage.textContent = "Invalid username or password.";
+            }
+        }
+
+        function getGrade(total) {
+            if (total >= 90) return "A";
+            if (total >= 80) return "B";
+            if (total >= 70) return "C";
+            if (total >= 60) return "D";
+            return "E";
+        }
+
+        function saveMarks() {
+            let snameVal = document.getElementById("sname").value.trim();
+            let rollVal = document.getElementById("roll").value.trim();
+            let subcodeVal = document.getElementById("subcode").value.trim();
+            let qpcodeVal = document.getElementById("qpcode").value.trim();
+            let extVal = document.getElementById("ext").value.trim();
+            let intVal = document.getElementById("int").value.trim();
+
+            if (!snameVal || !rollVal || !subcodeVal || !qpcodeVal || extVal === '' || intVal === '') {
+                alert("Please fill all fields to submit results.");
+                return;
+            }
+            if (rollVal.length < 8) {
+                alert("Roll number cannot be less than 8 characters.");
+                return;
+            }
+            if (subcodeVal.length > 3) {
+                alert("Subject code cannot be more than 3 characters.");
+                return;
+            }
+            if (+extVal < 0 || +extVal > 80 || isNaN(+extVal)) {
+                 alert("External marks must be between 0 and 80.");
+                 return;
+            }
+            if (+intVal < 0 || +intVal > 20 || isNaN(+intVal)) {
+                 alert("Internal marks must be between 0 and 20.");
+                 return;
+            }
+
+
+            let data = {
+                name: snameVal,
+                roll: rollVal,
+                subcode: subcodeVal,
+                qpcode: qpcodeVal,
+                ext: +extVal,
+                int: +intVal // Corrected: Was 'fint' previously. This fixes the null total.
+            };
+            data.total = data.ext + data.int;
+            data.grade = getGrade(data.total);
+            let key = `${data.roll}_${data.subcode}_${data.qpcode}`;
+            localStorage.setItem(key, JSON.stringify(data));
+            alert("Marks saved successfully.");
+            // Clear form fields
+            document.getElementById("sname").value = '';
+            document.getElementById("roll").value = '';
+            document.getElementById("subcode").value = '';
+            document.getElementById("qpcode").value = '';
+            document.getElementById("ext").value = '';
+            document.getElementById("int").value = '';
+        }
+
+        function loadRequests() {
+            const revals = JSON.parse(localStorage.getItem("revals") || "[]");
+            const queries = JSON.parse(localStorage.getItem("queries") || "[]");
+            const reappears = JSON.parse(localStorage.getItem("reappears") || "[]");
+
+            document.getElementById("revalContainer").innerHTML = revals.map((r, i) => `
+                <div class="card">
+                    <b>Temporary ID:</b> ${r.tempId || 'N/A'}<br>
+                    <b>Roll:</b> ${r.roll}<br>
+                    <b>Subject Code:</b> ${r.subcode}<br>
+                    <b>QP Code:</b> ${r.qpcode}<br>
+                    <b>Query:</b> ${r.query || 'N/A'}<br>
+                    <b>Status:</b> <span class="status-display status-${r.status.split(' ')[0].toLowerCase()}">${r.status || 'Pending'}</span><br>
+                    <button onclick="markUpdated(${i}, 'revals')">Update Marks</button>
+                    <button onclick="removeRequest(${i}, 'revals')" class="remove-btn">Mark as Done & Remove</button>
+                </div>
+            `).join('');
+
+            document.getElementById("reappearContainer").innerHTML = reappears.map((r, i) => `
+                <div class="card">
+                    <b>Roll:</b> ${r.roll}<br>
+                    <b>Subject Code:</b> ${r.subcode}<br>
+                    <b>Date Requested:</b> ${r.date || 'N/A'}<br>
+                    <b>Status:</b> <span class="status-display status-${r.status.split(' ')[0].toLowerCase()}">${r.status || 'Pending'}</span><br>
+                    <button onclick="removeRequest(${i}, 'reappears')" class="remove-btn">Mark as Done & Remove</button>
+                </div>
+            `).join('');
+
+
+            document.getElementById("queryContainer").innerHTML = queries.map((q, i) => `
+                <div class="card">
+                    <b>Roll:</b> ${q.roll}<br>
+                    <b>Query:</b> ${q.query}<br>
+                    <button onclick="markUpdated(${i}, 'queries')">Update Marks</button>
+                    <button onclick="removeRequest(${i}, 'queries')" class="remove-btn">Mark as Done & Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function markUpdated(index, type) {
+            let arr = JSON.parse(localStorage.getItem(type) || "[]");
+            const item = arr[index];
+
+            let newExt = prompt("Enter NEW External Marks (out of 80):", "0");
+            let newInt = prompt("Enter NEW Internal Marks (out of 20):", "0");
+            if (newExt === null || newInt === null) return; // User cancelled
+
+            newExt = parseInt(newExt);
+            newInt = parseInt(newInt);
+
+            if (isNaN(newExt) || isNaN(newInt) || newExt < 0 || newExt > 80 || newInt < 0 || newInt > 20) {
+                alert("Invalid marks entered. External must be 0-80, Internal 0-20.");
+                return;
+            }
+
+            let total = newExt + newInt;
+            let grade = getGrade(total);
+            let key = "";
+
+            if (type === "revals") {
+                key = `${item.roll}_${item.subcode}_${item.qpcode}`;
+                item.status = "Completed - Marks Updated"; // Update the status
+            } else if (type === "queries") {
+                // For query, find any key starting with roll. Assumes query refers to an existing result.
+                const allKeys = Object.keys(localStorage);
+                for (let k of allKeys) {
+                  if (k.startsWith(item.roll + "_")) {
+                    key = k;
+                    break;
+                  }
+                }
+            } else {
+                // For reappears, markUpdated isn't directly applicable for score change.
+                // This function is for revals/queries where marks *can* change.
+                alert("This action is not for Reappear requests. Use 'Mark as Done & Remove'.");
+                return;
+            }
+
+
+            if (key) { // Only attempt to update student data if a key was found
+                let student = JSON.parse(localStorage.getItem(key));
+                if (student) {
+                    student.ext = newExt;
+                    student.int = newInt;
+                    student.total = total;
+                    student.grade = grade;
+                    localStorage.setItem(key, JSON.stringify(student));
+                    alert("Marks updated successfully.");
+                } else {
+                    alert("Original student result not found for this request!");
+                }
+            } else {
+                alert("Could not find a matching student record to update.");
+            }
+
+            // Save the updated requests array (especially important if status was changed)
+            localStorage.setItem(type, JSON.stringify(arr));
+
+            loadRequests(); // Reload to reflect changes
+        }
+
+        function removeRequest(index, type) {
+            let arr = JSON.parse(localStorage.getItem(type) || "[]");
+            arr.splice(index, 1);
+            localStorage.setItem(type, JSON.stringify(arr));
+            alert("Request marked as done and removed.");
+            loadRequests(); // Reload to reflect changes
+        }
+
+    </script>
+</body>
+</html>

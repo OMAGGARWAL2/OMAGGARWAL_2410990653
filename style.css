@@ -1,0 +1,313 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    /* Cream Silverish Gradient Background */
+    background: linear-gradient(45deg, #f2f2f2, #e8e8e8, #dedede, #d4d4d4);
+    background-size: 400% 400%;
+    animation: gradientAnimation 15s ease infinite;
+    color: #333;
+    overflow-x: hidden;
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInContainer 1s ease-out forwards;
+}
+
+@keyframes fadeInContainer {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+h2, h3 {
+    color: #556677; /* Darker silver-grey for headings */
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+
+.dashboard-options button,
+button {
+    background-color: #7a8a9a; /* Muted silver-grey primary button */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 10px 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 8px rgba(122, 138, 154, 0.2); /* Shadow based on new button color */
+}
+
+.dashboard-options button:hover,
+button:hover {
+    background-color: #616d79; /* Darker silver-grey on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(122, 138, 154, 0.3); /* Darker shadow on hover */
+}
+
+button.secondary {
+    background-color: #6c757d; /* Existing muted grey, fits well */
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
+}
+
+button.secondary:hover {
+    background-color: #5a6268; /* Existing muted grey hover, fits well */
+    box-shadow: 0 6px 12px rgba(108, 117, 125, 0.3);
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+    width: calc(100% - 24px);
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ced4da; /* Light grey, fine */
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+    border-color: #aab2bd; /* Silverish focus border */
+    box-shadow: 0 0 0 0.2rem rgba(195, 158, 84, 0.25); /* Silverish focus shadow */
+    outline: none;
+}
+
+.content-section {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    text-align: left;
+    transition: transform 0.3s ease;
+}
+
+.content-section:hover {
+    transform: translateY(-3px);
+}
+
+.message-box {
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideInMessage 0.5s ease-out forwards;
+}
+
+@keyframes slideInMessage {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success-message { background-color: #28a745; } /* Green */
+.error-message { background-color: #dc3545; }   /* Red */
+.info-message { background-color: #8fa1a8; }   /* Muted grey/silver for info */
+.warning-message { background-color: #ffc107; } /* Yellow */
+
+.result-card {
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #eee;
+}
+
+.result-card p {
+    margin: 8px 0;
+    font-size: 15px;
+}
+
+.result-card-green { background-color: #e6ffe6; border-color: #28a745; }
+.result-card-yellow { background-color: #fffacd; border-color: #ffc107; }
+.result-card-red { background-color: #ffe6e6; border-color: #dc3545; }
+
+.grade-display {
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+}
+.grade-a { background-color: #28a745; } /* Green */
+.grade-b { background-color: #8fa1a8; } /* Muted silver-grey */
+.grade-c { background-color: #c4b59f; } /* Soft cream/beige */
+.grade-d { background-color: #ffc107; } /* Yellow */
+.grade-e { background-color: #6c757d; } /* Darker muted grey */
+.grade-f { background-color: #dc3545; } /* Red */
+
+.status-display {
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+}
+.status-pending { background-color: #ffc107; }
+.status-approved { background-color: #28a745; }
+.status-rejected { background-color: #dc3545; }
+
+/* Loader Styles */
+#loader-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 0.5s ease-out;
+}
+
+#loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #7a8a9a; /* Silverish blue for loader top */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Hide loader when page is loaded */
+body.loaded #loader-wrapper {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Specific styles for the hidden PDF content (ensure it's not affected by main page styles for display) */
+#pdfContentHolder {
+    display: none;
+    width: 210mm; /* A4 width for consistency */
+    padding: 20mm; /* Internal padding */
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+#pdfContentHolder h1 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #2c3e50; /* Keep dark for contrast in PDF */
+}
+
+#pdfContentHolder hr.separator {
+    border: none;
+    border-top: 1px dashed #bbb;
+    margin: 15px 0;
+}
+
+#pdfContentHolder .student-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+#pdfContentHolder .marks-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+    text-align: left;
+}
+
+#pdfContentHolder .marks-table th,
+#pdfContentHolder .marks-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    white-space: nowrap;
+}
+
+#pdfContentHolder .marks-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+#pdfContentHolder .instructions {
+    margin-top: 30px;
+    font-size: 11px;
+    color: #9d6731;
+    line-height: 1.4;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 25px;
+        margin: 10px auto;
+    }
+    h2 {
+        font-size: 24px;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    input[type="text"],
+    input[type="password"],
+    textarea {
+        width: calc(100% - 20px);
+        padding: 10px;
+    }
+    .content-section {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px 20px;
+    }
+    h2 {
+        font-size: 20px;
+    }
+    button {
+        width: 100%;
+        margin: 5px 0;
+    }
+    .dashboard-options button {
+        margin: 5px 0;
+    }
+}
